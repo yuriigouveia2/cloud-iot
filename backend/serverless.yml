@@ -1,0 +1,75 @@
+service:
+  name: serverless-signal-yuri
+
+plugins:
+  - serverless-webpack
+  - serverless-iam-roles-per-function
+  - serverless-aws-documentation
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'sa-east-1'}
+
+  environment:
+    SIGNAL_TABLE: Signal-${self:provider.stage}
+
+custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Signal API
+        description: Serverless API for a Signal app.
+
+functions:
+
+  # signal: Configure this function
+  CreateSignal:
+    handler: src/lambda/http/createSignal.handler
+    events:
+      - http:
+          method: post
+          path: signals
+          cors: true
+          documentation:
+            summary: Create a new signal
+            description: Create a new signal
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SIGNAL_TABLE}
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST,PATCH,PUT,DELETE'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+
+    # signal: Add any necessary AWS resources
+    SignalDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: createdAt
+            AttributeType: S
+          - AttributeName: signalId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: signalId
+            KeyType: HASH
+          - AttributeName: createdAt
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.SIGNAL_TABLE}
