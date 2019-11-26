@@ -21,4 +21,17 @@ export class SignalAccess {
 
         return signal;
     }
+
+    async GetAllSignals(): Promise<SignalItem[]> {
+        const logger = createLogger('get-signals');
+        logger.info('Getting all signal items ');
+
+        const result = await this.docClient.scan({
+            TableName: this.signalTable
+        }).promise();
+
+        const items = result.Items;
+
+        return items as SignalItem[];
+    }
 }

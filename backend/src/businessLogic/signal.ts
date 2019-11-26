@@ -18,3 +18,7 @@ export async function CreateSignal(
         
     });
 }
+
+export async function GetAllSignals(): Promise<SignalItem[]> {
+    return groupAccess.GetAllSignals();
+}
