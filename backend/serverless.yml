@@ -27,6 +27,23 @@ custom:
 functions:
 
   # signal: Configure this function
+
+  GetSignals:
+    handler: src/lambda/http/getSignal.handler
+    events:
+      - http:
+          method: get
+          path: signals
+          cors: true
+          documentation:
+            summary: Get signal itens
+            description: Get signal itens
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.SIGNAL_TABLE}
+
   CreateSignal:
     handler: src/lambda/http/createSignal.handler
     events:
