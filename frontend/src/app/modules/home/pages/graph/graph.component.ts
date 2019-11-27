@@ -1,4 +1,8 @@
+import { environment } from './../../../../../environments/environment';
+import { SignalService } from './../../../../core/services/pages/signal/signal.service';
 import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-graph',
@@ -16,54 +20,60 @@ export class GraphComponent implements OnInit {
   gradient = false;
   showLegend = true;
   showXAxisLabel = true;
-  xAxisLabel = 'Number';
+  xAxisLabel = 'Time';
   showYAxisLabel = true;
-  yAxisLabel = 'Color Value';
+  yAxisLabel = 'Signal Value';
   timeline = true;
 
   colorScheme = {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
   };
 
-  multi: any[] = [
-    {
-      name: 'Cyan',
-      series: [
-        {
-          name: 5,
-          value: 2650
-        },
-        {
-          name: 10,
-          value: 2800      },
-        {
-          name: 15,
-          value: 2000
-        }
-      ]
-    },
-    {
-      name: 'Yellow',
-      series: [
-        {
-          name: 5,
-          value: 2500
-        },
-        {
-          name: 10,
-          value: 3100
-        },
-        {
-          name: 15,
-          value: 2350
-        }
-      ]
-    }
-  ];
+  multi: any[] = [{
+    name: 'Teste',
+    series: [
+      {
+        name: 12,
+        value: 5000
+      },
+      {
+        name: 13,
+        value: 16000
+      }
+    ]
+  }];
 
-  constructor() { }
+  constructor(
+    private http: HttpClient
+  ) { }
 
   ngOnInit() {
+    this.getLatestSignal();
+  }
+
+  getLatestSignal() {
+    this.http.get(environment.urlApi)
+      .pipe(map(((data: any) => data.items)))
+      .subscribe((signal: any[]) => {
+
+        const signals = signal[signal.length - 1].signal;
+        const obj = [];
+        let i = 0;
+        for (const sig of signals) {
+          obj.push({
+            value: parseFloat((sig * 10000000).toFixed(2)),
+            name: String(i)
+          });
+          i++;
+        }
+
+        this.multi.push({
+          name: 'Signal',
+          series: obj
+        });
+
+        this.multi = [...this.multi];
+      });
   }
 
   onSelect(event) {
